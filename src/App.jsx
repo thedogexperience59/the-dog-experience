@@ -366,7 +366,7 @@ function AdminPanel({ sessionTypes, slots, bookings, registrations, onUpdateSess
     );
   };
 
-  return (
+  return (<>
     <div style={{ minHeight:"100vh", background:"#111", fontFamily:"'DM Sans',Helvetica,sans-serif", color:"#e8e8e8" }}>
       <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;600;700&display=swap" rel="stylesheet" />
       {/* Header */}
