@@ -32,7 +32,7 @@ const DEFAULT_REGISTRATIONS = [];
 
 // EmailJS config — à remplir après création du compte EmailJS (voir guide)
 const EMAILJS_SERVICE_ID = "service_hmunyzw";
-const EMAILJS_TEMPLATE_ID = "template_ab12cd34";
+const EMAILJS_TEMPLATE_ID = "template_xxckxqh";
 const EMAILJS_PUBLIC_KEY = "0KzSyB2vEwZwiMvxP";
 
 
