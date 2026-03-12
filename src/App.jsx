@@ -31,10 +31,9 @@ const DEFAULT_BOOKINGS = {};
 const DEFAULT_REGISTRATIONS = [];
 
 // EmailJS config — à remplir après création du compte EmailJS (voir guide)
-const EMAILJS_SERVICE_ID = "service_hmunyzw";
-const EMAILJS_TEMPLATE_ID = "template_xxckxqh";
-const EMAILJS_PUBLIC_KEY = "0KzSyB2vEwZwiMvxP";
-
+const EMAILJS_SERVICE_ID  = "VOTRE_SERVICE_ID";
+const EMAILJS_TEMPLATE_ID = "VOTRE_TEMPLATE_ID";
+const EMAILJS_PUBLIC_KEY  = "VOTRE_PUBLIC_KEY";
 
 const DEFAULT_SLOTS = {
   "2026-03": [
@@ -661,34 +660,37 @@ export default function App() {
     // Update bookings count
     const newBookings = { ...bookings, [selectedSlot.id]: (bookings[selectedSlot.id]||0) + 1 };
     await updateBookings(newBookings);
-    // Send email via EmailJS (if configured)
+    // Send email via EmailJS SDK
     if(EMAILJS_SERVICE_ID !== "VOTRE_SERVICE_ID") {
       try {
-        await fetch(`https://api.emailjs.com/api/v1.0/email/send`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            service_id: EMAILJS_SERVICE_ID,
-            template_id: EMAILJS_TEMPLATE_ID,
-            user_id: EMAILJS_PUBLIC_KEY,
-            template_params: {
-              to_email: "thedogexperience59@gmail.com",
-              client_prenom: form.prenom,
-              client_nom: form.nom,
-              client_email: form.email,
-              client_tel: form.tel,
-              chien_nom: form.chien,
-              chien_race: form.race||"Non précisé",
-              chien_age: form.age||"Non précisé",
-              session_type: sess?.label||"",
-              session_date: selectedSlot.date,
-              session_heure: selectedSlot.time,
-              session_prix: sess?.price||"",
-              notes: form.notes||"Aucune",
-              date_inscription: now,
-            }
-          })
+        // Load EmailJS SDK if not already loaded
+        if(!window.emailjs) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js";
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+        }
+        window.emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+        await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+          to_email: "thedogexperience59@gmail.com",
+          client_prenom: form.prenom,
+          client_nom: form.nom,
+          client_email: form.email,
+          client_tel: form.tel,
+          chien_nom: form.chien,
+          chien_race: form.race||"Non précisé",
+          chien_age: form.age||"Non précisé",
+          session_type: sess?.label||"",
+          session_date: selectedSlot.date,
+          session_heure: selectedSlot.time,
+          session_prix: sess?.price||"",
+          notes: form.notes||"Aucune",
+          date_inscription: now,
         });
+        console.log("Email envoyé !");
       } catch(e) { console.warn("Email non envoyé:", e); }
     }
     setSubmitted(true);
