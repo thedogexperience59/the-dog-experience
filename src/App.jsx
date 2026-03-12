@@ -625,11 +625,7 @@ function AdminPanel({ sessionTypes, slots, bookings, registrations, onUpdateSess
           <div style={{ marginBottom:16 }}>
             <div style={{ fontSize:11, fontWeight:700, color:"#aaa", letterSpacing:1.5, textTransform:"uppercase", marginBottom:8 }}>Votre message personnalisé</div>
             <textarea value={msgText} onChange={e=>setMsgText(e.target.value)} rows={5}
-              placeholder={"Bonjour " + msgModal.prenom + ",
-
-Je confirme votre rendez-vous du " + msgModal.date + " à " + msgModal.time + ".
-
-À bientôt !"}
+              placeholder={"Bonjour " + msgModal.prenom + ", je confirme votre rendez-vous du " + msgModal.date + " à " + msgModal.time + ". À bientôt !"}
               style={{ width:"100%", padding:"12px 14px", borderRadius:10, border:`2px solid ${TEAL}40`, background:"#111", color:"#e8e8e8", fontSize:13, fontFamily:"'DM Sans',sans-serif", resize:"vertical", lineHeight:1.6, outline:"none", boxSizing:"border-box" }} />
           </div>
           {msgSent ? (
