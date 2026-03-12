@@ -31,10 +31,10 @@ const DEFAULT_BOOKINGS = {};
 const DEFAULT_REGISTRATIONS = [];
 
 // EmailJS config — à remplir après création du compte EmailJS (voir guide)
-const EMAILJS_SERVICE_ID          = "service_hmunyzw";
-const EMAILJS_TEMPLATE_ID         = "template_xxckxqh";
-const EMAILJS_TEMPLATE_CLIENT_ID  = "template_7tsf43p";
-const EMAILJS_PUBLIC_KEY          = "0KzSyB2vEwZwiMvxP";
+const EMAILJS_SERVICE_ID         = "service_hmunyzw";
+const EMAILJS_TEMPLATE_ID        = "template_xxckxqh";
+const EMAILJS_TEMPLATE_CLIENT_ID = "template_7tsf43p";
+const EMAILJS_PUBLIC_KEY         = "0KzSyB2vEwZwiMvxP";
 
 const DEFAULT_SLOTS = {
   "2026-03": [
@@ -239,37 +239,41 @@ function AdminPanel({ sessionTypes, slots, bookings, registrations, onUpdateSess
   const [msgText, setMsgText] = useState("");
   const [msgSending, setMsgSending] = useState(false);
   const [msgSent, setMsgSent] = useState(false);
-async function confirmRegistration(reg) {
-  try {
-    if(!window.emailjs) {
-      await new Promise((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src = "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js";
-        script.onload = resolve; script.onerror = reject;
-        document.head.appendChild(script);
+
+  async function confirmRegistration(reg) {
+    // Send confirmation email to client
+    try {
+      if(!window.emailjs) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js";
+          script.onload = resolve; script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      }
+      window.emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+      const sess = sessionTypes.find(s=>s.id===reg.sessionType);
+      await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_CLIENT_ID, {
+        to_email: reg.email,
+        client_prenom: reg.prenom,
+        client_nom: reg.nom,
+        chien_nom: reg.chien,
+        session_type: sess?.label||reg.sessionType,
+        session_date: reg.date,
+        session_heure: reg.time,
+        session_duree: sess?.duration||"",
+        session_prix: sess?.price||reg.price||"",
+        message_perso: "Votre rendez-vous est confirmé. À très bientôt !",
       });
+      // Mark as confirmed
+      const updated = registrations.map(r=>r.id===reg.id?{...r, confirmed:true}:r);
+      onUpdateRegistrations(updated);
+      alert("✅ Confirmation envoyée à " + reg.email + " !");
+    } catch(e) {
+      alert("Erreur lors de l'envoi : " + e.message);
     }
-    window.emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
-    const sess = sessionTypes.find(s=>s.id===reg.sessionType);
-    await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_CLIENT_ID, {
-      to_email: reg.email,
-      client_prenom: reg.prenom,
-      client_nom: reg.nom,
-      chien_nom: reg.chien,
-      session_type: sess?.label||reg.sessionType,
-      session_date: reg.date,
-      session_heure: reg.time,
-      session_duree: sess?.duration||"",
-      session_prix: sess?.price||reg.price||"",
-      message_perso: "Votre rendez-vous est confirmé. À très bientôt !",
-    });
-    const updated = registrations.map(r=>r.id===reg.id?{...r, confirmed:true}:r);
-    onUpdateRegistrations(updated);
-    alert("✅ Confirmation envoyée à " + reg.email + " !");
-  } catch(e) {
-    alert("Erreur lors de l'envoi : " + e.message);
   }
-}
+
   async function sendMessageToClient(reg) {
     if(!msgText.trim()) return;
     setMsgSending(true);
@@ -396,7 +400,8 @@ async function confirmRegistration(reg) {
     );
   };
 
-  return (<>
+  return (
+    <>
     <div style={{ minHeight:"100vh", background:"#111", fontFamily:"'DM Sans',Helvetica,sans-serif", color:"#e8e8e8" }}>
       <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;600;700&display=swap" rel="stylesheet" />
       {/* Header */}
@@ -608,20 +613,17 @@ async function confirmRegistration(reg) {
                           </div>
                         </div>
                         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-                          <span style={{ fontSize:11, color:"#666", fontStyle:"italic" }}>Inscrit le {r.createdAt}</span>{r.confirmed
-  ? <span style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20, background:"#0d2a20", color:"#5ada9a" }}>✅ Confirmé</span>
-  : <span style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20, background:"#2a1a00", color:YELLOW }}>⏳ En attente</span>
-}
+                          <span style={{ fontSize:11, color:"#666", fontStyle:"italic" }}>Inscrit le {r.createdAt}</span>
+                          {r.confirmed
+                            ? <span style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20, background:"#0d2a20", color:"#5ada9a" }}>✅ Confirmé</span>
+                            : <span style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20, background:"#2a1a00", color:YELLOW }}>⏳ En attente</span>
+                          }
+                          {!r.confirmed && (
+                            <button onClick={()=>confirmRegistration(r)}
+                              style={{ padding:"4px 10px", borderRadius:6, background:"#0d2a20", border:"none", color:"#5ada9a", cursor:"pointer", fontSize:12, fontWeight:700 }}>✅ Confirmer</button>
+                          )}
                           <button onClick={()=>{ setMsgModal(r); setMsgText(""); setMsgSent(false); }}
-                            style={{ padding:"4px 10px", borderRadius:6, background:"#0d2a20", border:"none", color:"#5ada9a", cursor:"pointer", fontSize:12 }}>{!r.confirmed && (
-  <button onClick={()=>confirmRegistration(r)}
-    style={{ padding:"4px 10px", borderRadius:6, background:"#0d2a20", border:"none", color:"#5ada9a", cursor:"pointer", fontSize:12, fontWeight:700 }}>✅ Confirmer</button>
-)}
-```
-
----
-
-
+                            style={{ padding:"4px 10px", borderRadius:6, background:"#1a1a2a", border:"none", color:"#8888ff", cursor:"pointer", fontSize:12 }}>✉️ Message</button>
                           <button onClick={()=>{ if(window.confirm("Supprimer cette inscription ?")) onDeleteRegistration(r.id); }}
                             style={{ padding:"4px 10px", borderRadius:6, background:"#3a1a1a", border:"none", color:"#e05050", cursor:"pointer", fontSize:12 }}>🗑</button>
                         </div>
@@ -775,7 +777,8 @@ export default function App() {
       date: selectedSlot.date,
       time: selectedSlot.time,
       price: sess?.price||"",
-      createdAt: now,confirmed: false,
+      createdAt: now,
+      confirmed: false, // confirmation manuelle depuis l'espace pro
     };
     // Save registration
     const newRegs = [...registrations, reg];
@@ -815,6 +818,8 @@ export default function App() {
         });
         console.log("Email envoyé !");
         // Email client envoyé manuellement depuis l'espace pro
+      } catch(e) { console.warn("Email non envoyé:", e); }
+    }
     setSubmitted(true);
   }
 
@@ -843,7 +848,8 @@ export default function App() {
 
   if(adminMode && adminUnlocked) return (
     <AdminPanel sessionTypes={sessionTypes} slots={slots} bookings={bookings} registrations={registrations}
-      onUpdateSessions={updateSessions} onUpdateSlots={updateSlots} onDeleteRegistration={handleDeleteRegistration} onUpdateRegistrations={updateRegistrations}
+      onUpdateSessions={updateSessions} onUpdateSlots={updateSlots} onDeleteRegistration={handleDeleteRegistration}
+      onUpdateRegistrations={updateRegistrations}
       onExit={()=>{ setAdminMode(false); setAdminUnlocked(false); setAdminPw(""); }} />
   );
 
