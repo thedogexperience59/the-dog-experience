@@ -651,6 +651,7 @@ Je confirme votre rendez-vous du " + msgModal.date + " à " + msgModal.time + ".
         </div>
       </div>
     )}
+    </>
   );
 }
 
