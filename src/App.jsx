@@ -31,9 +31,10 @@ const DEFAULT_BOOKINGS = {};
 const DEFAULT_REGISTRATIONS = [];
 
 // EmailJS config — à remplir après création du compte EmailJS (voir guide)
-const EMAILJS_SERVICE_ID  = "service_hmunyzw";
-const EMAILJS_TEMPLATE_ID = "template_xxckxqh";
-const EMAILJS_PUBLIC_KEY  = "0KzSyB2vEwZwiMvxP";
+const EMAILJS_SERVICE_ID          = "service_hmunyzw";
+const EMAILJS_TEMPLATE_ID         = "template_xxckxqh";
+const EMAILJS_TEMPLATE_CLIENT_ID  = "template_7tsf43p";
+const EMAILJS_PUBLIC_KEY          = "0KzSyB2vEwZwiMvxP";
 
 const DEFAULT_SLOTS = {
   "2026-03": [
@@ -234,6 +235,44 @@ function Btn({ children, onClick, disabled, accent=YELLOW, small=false }) {
 // ── ADMIN PANEL ────────────────────────────────────────────────────────────────
 function AdminPanel({ sessionTypes, slots, bookings, registrations, onUpdateSessions, onUpdateSlots, onDeleteRegistration, onExit }) {
   const [tab, setTab] = useState("sessions");
+  const [msgModal, setMsgModal] = useState(null); // { reg } or null
+  const [msgText, setMsgText] = useState("");
+  const [msgSending, setMsgSending] = useState(false);
+  const [msgSent, setMsgSent] = useState(false);
+
+  async function sendMessageToClient(reg) {
+    if(!msgText.trim()) return;
+    setMsgSending(true);
+    try {
+      if(!window.emailjs) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js";
+          script.onload = resolve; script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      }
+      window.emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+      const sess = sessionTypes.find(s=>s.id===reg.sessionType);
+      await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_CLIENT_ID, {
+        to_email: reg.email,
+        client_prenom: reg.prenom,
+        client_nom: reg.nom,
+        chien_nom: reg.chien,
+        session_type: sess?.label||reg.sessionType,
+        session_date: reg.date,
+        session_heure: reg.time,
+        session_duree: sess?.duration||"",
+        session_prix: sess?.price||reg.price||"",
+        message_perso: msgText,
+      });
+      setMsgSent(true);
+      setTimeout(()=>{ setMsgModal(null); setMsgText(""); setMsgSent(false); }, 2000);
+    } catch(e) {
+      alert("Erreur lors de l'envoi : " + e.message);
+    }
+    setMsgSending(false);
+  }
   const [editingSession, setEditingSession] = useState(null);
   const [showNewSession, setShowNewSession] = useState(false);
   const [newSession, setNewSession] = useState({ id:"", icon:"📞", label:"", duration:"", color:TEAL, tag:"", desc:"", price:"", maxPeople:1 });
@@ -540,6 +579,8 @@ function AdminPanel({ sessionTypes, slots, bookings, registrations, onUpdateSess
                         </div>
                         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
                           <span style={{ fontSize:11, color:"#666", fontStyle:"italic" }}>Inscrit le {r.createdAt}</span>
+                          <button onClick={()=>{ setMsgModal(r); setMsgText(""); setMsgSent(false); }}
+                            style={{ padding:"4px 10px", borderRadius:6, background:"#0d2a20", border:"none", color:"#5ada9a", cursor:"pointer", fontSize:12 }}>✉️ Message</button>
                           <button onClick={()=>{ if(window.confirm("Supprimer cette inscription ?")) onDeleteRegistration(r.id); }}
                             style={{ padding:"4px 10px", borderRadius:6, background:"#3a1a1a", border:"none", color:"#e05050", cursor:"pointer", fontSize:12 }}>🗑</button>
                         </div>
@@ -566,6 +607,50 @@ function AdminPanel({ sessionTypes, slots, bookings, registrations, onUpdateSess
         )}
       </div>
     </div>
+
+    {/* ── MESSAGE MODAL ── */}
+    {msgModal && (
+      <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, padding:20 }}>
+        <div style={{ background:"#1a1a1a", borderRadius:20, padding:28, maxWidth:500, width:"100%", border:`2px solid ${TEAL}` }}>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:20, letterSpacing:2, color:"#e8e8e8", marginBottom:4 }}>ENVOYER UN MESSAGE</div>
+          <div style={{ fontSize:13, color:"#888", marginBottom:20 }}>
+            À : <strong style={{ color:"#e8e8e8" }}>{msgModal.prenom} {msgModal.nom}</strong> — {msgModal.email}
+          </div>
+          {/* Recap */}
+          <div style={{ background:"#111", borderRadius:12, padding:"12px 16px", marginBottom:16, fontSize:12, color:"#888" }}>
+            <div style={{ color:"#e8e8e8", fontWeight:700, marginBottom:4 }}>{sessionTypes.find(s=>s.id===msgModal.sessionType)?.label||msgModal.sessionType}</div>
+            <div>📅 {msgModal.date} à {msgModal.time} · 🐶 {msgModal.chien}</div>
+          </div>
+          {/* Message field */}
+          <div style={{ marginBottom:16 }}>
+            <div style={{ fontSize:11, fontWeight:700, color:"#aaa", letterSpacing:1.5, textTransform:"uppercase", marginBottom:8 }}>Votre message personnalisé</div>
+            <textarea value={msgText} onChange={e=>setMsgText(e.target.value)} rows={5}
+              placeholder={"Bonjour " + msgModal.prenom + ",
+
+Je confirme votre rendez-vous du " + msgModal.date + " à " + msgModal.time + ".
+
+À bientôt !"}
+              style={{ width:"100%", padding:"12px 14px", borderRadius:10, border:`2px solid ${TEAL}40`, background:"#111", color:"#e8e8e8", fontSize:13, fontFamily:"'DM Sans',sans-serif", resize:"vertical", lineHeight:1.6, outline:"none", boxSizing:"border-box" }} />
+          </div>
+          {msgSent ? (
+            <div style={{ textAlign:"center", padding:"14px", borderRadius:10, background:"#0d2a20", color:"#5ada9a", fontWeight:700, fontSize:15 }}>✅ Message envoyé !</div>
+          ) : (
+            <div style={{ display:"flex", gap:10 }}>
+              <button onClick={()=>sendMessageToClient(msgModal)} disabled={msgSending||!msgText.trim()}
+                style={{ flex:1, padding:"13px", borderRadius:10, background:msgSending||!msgText.trim()?"#333":TEAL, border:"none",
+                  color:msgSending||!msgText.trim()?"#666":WHITE, fontWeight:800, fontSize:14, cursor:msgSending||!msgText.trim()?"not-allowed":"pointer",
+                  fontFamily:"'Bebas Neue',sans-serif", letterSpacing:1.5 }}>
+                {msgSending ? "ENVOI EN COURS…" : "✉️ ENVOYER"}
+              </button>
+              <button onClick={()=>{ setMsgModal(null); setMsgText(""); }}
+                style={{ padding:"13px 20px", borderRadius:10, border:"1px solid #333", background:"none", color:"#888", cursor:"pointer", fontSize:14, fontFamily:"inherit" }}>
+                Annuler
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
   );
 }
 
@@ -691,6 +776,24 @@ export default function App() {
           date_inscription: now,
         });
         console.log("Email envoyé !");
+        // Email de confirmation au client
+        if(EMAILJS_TEMPLATE_CLIENT_ID !== "VOTRE_TEMPLATE_CLIENT_ID") {
+          try {
+            await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_CLIENT_ID, {
+              to_email: form.email,
+              client_prenom: form.prenom,
+              client_nom: form.nom,
+              chien_nom: form.chien,
+              session_type: sess?.label||"",
+              session_date: selectedSlot.date,
+              session_heure: selectedSlot.time,
+              session_duree: sess?.duration||"",
+              session_prix: sess?.price||"",
+              message_perso: "",
+            });
+            console.log("Email client envoyé !");
+          } catch(e) { console.warn("Email client non envoyé:", e); }
+        }
       } catch(e) { console.warn("Email non envoyé:", e); }
     }
     setSubmitted(true);
