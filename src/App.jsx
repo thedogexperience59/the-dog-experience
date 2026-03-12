@@ -27,6 +27,13 @@ const DEFAULT_SESSION_TYPES = [
 
 // bookings: { slotId: number } — nombre de réservations par créneau
 const DEFAULT_BOOKINGS = {};
+// registrations: array of full booking objects
+const DEFAULT_REGISTRATIONS = [];
+
+// EmailJS config — à remplir après création du compte EmailJS (voir guide)
+const EMAILJS_SERVICE_ID  = "VOTRE_SERVICE_ID";
+const EMAILJS_TEMPLATE_ID = "VOTRE_TEMPLATE_ID";
+const EMAILJS_PUBLIC_KEY  = "VOTRE_PUBLIC_KEY";
 
 const DEFAULT_SLOTS = {
   "2026-03": [
@@ -225,7 +232,7 @@ function Btn({ children, onClick, disabled, accent=YELLOW, small=false }) {
 }
 
 // ── ADMIN PANEL ────────────────────────────────────────────────────────────────
-function AdminPanel({ sessionTypes, slots, bookings, onUpdateSessions, onUpdateSlots, onExit }) {
+function AdminPanel({ sessionTypes, slots, bookings, registrations, onUpdateSessions, onUpdateSlots, onDeleteRegistration, onExit }) {
   const [tab, setTab] = useState("sessions");
   const [editingSession, setEditingSession] = useState(null);
   const [showNewSession, setShowNewSession] = useState(false);
@@ -335,7 +342,7 @@ function AdminPanel({ sessionTypes, slots, bookings, onUpdateSessions, onUpdateS
       </div>
       {/* Tabs */}
       <div style={{ display:"flex", borderBottom:"1px solid #222", background:"#0d0d0d" }}>
-        {[["sessions","🎓 Types de séances"],["slots","📅 Créneaux"]].map(([t,l])=>(
+        {[["sessions","🎓 Types de séances"],["slots","📅 Créneaux"],["registrations",`📋 Inscriptions${registrations.length>0?" ("+registrations.length+")":""}`]].map(([t,l])=>(
           <button key={t} onClick={()=>setTab(t)}
             style={{ padding:"14px 28px", background:"none", border:"none", borderBottom:`3px solid ${tab===t?YELLOW:"transparent"}`,
               color:tab===t?YELLOW:"#888", fontWeight:700, fontSize:14, cursor:"pointer", fontFamily:"inherit" }}>
@@ -491,6 +498,72 @@ function AdminPanel({ sessionTypes, slots, bookings, onUpdateSessions, onUpdateS
             )}
           </div>
         )}
+        {/* ─ REGISTRATIONS TAB ─ */}
+        {tab==="registrations" && (
+          <div>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+              <div>
+                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:2 }}>INSCRIPTIONS</div>
+                <div style={{ fontSize:13, color:"#666" }}>{registrations.length} réservation{registrations.length>1?"s":""} au total.</div>
+              </div>
+              {registrations.length>0&&(
+                <button onClick={()=>{
+                  const csv = ["Prénom,Nom,Email,Téléphone,Séance,Date,Heure,Chien,Race,Âge,Notes,Inscrit le"]
+                    .concat(registrations.map(r=>[r.prenom,r.nom,r.email,r.tel,r.sessionLabel,r.date,r.time,r.chien,r.race||"",r.age||"",r.notes||"",r.createdAt].map(v=>`"${v}"`).join(",")))
+                    .join("\n");
+                  const a=document.createElement("a"); a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+                  a.download="inscriptions-tde.csv"; a.click();
+                }}
+                  style={{ padding:"10px 20px", borderRadius:10, background:"#1a5040", border:"none", color:"#5ada9a", fontWeight:800, fontSize:13, cursor:"pointer", fontFamily:"'Bebas Neue',sans-serif", letterSpacing:1 }}>
+                  ⬇ EXPORTER CSV
+                </button>
+              )}
+            </div>
+            {registrations.length===0 ? (
+              <div style={{ textAlign:"center", padding:"60px 20px", color:"#555" }}>
+                <div style={{ fontSize:40, marginBottom:10 }}>📭</div>
+                Aucune inscription pour l'instant.
+              </div>
+            ) : (
+              <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                {[...registrations].reverse().map((r,i)=>{
+                  const sess = sessionTypes.find(s=>s.id===r.sessionType);
+                  return (
+                    <div key={r.id||i} style={{ background:"#1a1a1a", borderRadius:12, padding:"16px 18px", border:"1px solid #2a2a2a" }}>
+                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:8, marginBottom:10 }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                          <div style={{ width:38, height:38, borderRadius:9, background:sess?.color||TEAL, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>{sess?.icon||"🐾"}</div>
+                          <div>
+                            <div style={{ fontWeight:700, fontSize:15, fontFamily:"'Bebas Neue',sans-serif", letterSpacing:.5 }}>{r.prenom} {r.nom}</div>
+                            <div style={{ fontSize:12, color:"#888" }}>{sess?.label||r.sessionType} · {r.date} à {r.time}</div>
+                          </div>
+                        </div>
+                        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                          <span style={{ fontSize:11, color:"#666", fontStyle:"italic" }}>Inscrit le {r.createdAt}</span>
+                          <button onClick={()=>{ if(window.confirm("Supprimer cette inscription ?")) onDeleteRegistration(r.id); }}
+                            style={{ padding:"4px 10px", borderRadius:6, background:"#3a1a1a", border:"none", color:"#e05050", cursor:"pointer", fontSize:12 }}>🗑</button>
+                        </div>
+                      </div>
+                      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:8 }}>
+                        {[
+                          ["✉️ Email", r.email],
+                          ["📞 Tél.", r.tel],
+                          ["🐶 Chien", r.chien+(r.race?` (${r.race})`:"")+(r.age?` · ${r.age}`:"")],
+                          r.notes&&["📝 Notes", r.notes],
+                        ].filter(Boolean).map(([label,val])=>(
+                          <div key={label} style={{ background:"#111", borderRadius:8, padding:"8px 12px" }}>
+                            <div style={{ fontSize:10, color:"#666", marginBottom:2 }}>{label}</div>
+                            <div style={{ fontSize:12, color:"#e8e8e8" }}>{val}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -501,6 +574,7 @@ export default function App() {
   const [sessionTypes, setSessionTypes] = useState(DEFAULT_SESSION_TYPES);
   const [slots, setSlots] = useState(DEFAULT_SLOTS);
   const [bookings, setBookings] = useState(DEFAULT_BOOKINGS); // { slotId: count }
+  const [registrations, setRegistrations] = useState(DEFAULT_REGISTRATIONS);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -512,6 +586,8 @@ export default function App() {
         if(sl) setSlots(JSON.parse(sl.value));
         const bk = await window.storage.get("bookings");
         if(bk) setBookings(JSON.parse(bk.value));
+        const rg = await window.storage.get("registrations");
+        if(rg) setRegistrations(JSON.parse(rg.value));
       } catch(e) {}
       setLoaded(true);
     }
@@ -526,9 +602,19 @@ export default function App() {
     setSlots(data);
     try { await window.storage.set("slots", JSON.stringify(data)); } catch(e){}
   }
+  async function updateRegistrations(data) {
+    setRegistrations(data);
+    try { await window.storage.set("registrations", JSON.stringify(data)); } catch(e){}
+  }
+
   async function updateBookings(data) {
     setBookings(data);
     try { await window.storage.set("bookings", JSON.stringify(data)); } catch(e){}
+  }
+
+  function handleDeleteRegistration(id) {
+    const updated = registrations.filter(r=>r.id!==id);
+    updateRegistrations(updated);
   }
 
   const [adminMode, setAdminMode]       = useState(false);
@@ -554,10 +640,56 @@ export default function App() {
   const availableSlots = (slots[selectedMonth]||[]).filter(s=>s.type===selectedType?.id);
   const allFilled = form.nom&&form.prenom&&form.email&&form.tel&&form.chien;
 
-  function handleConfirm() {
+  async function handleConfirm() {
     if(!selectedSlot) return;
+    const sess = sessionTypes.find(s=>s.id===selectedType?.id);
+    const now = new Date().toLocaleDateString("fr-FR", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
+    const reg = {
+      id: uid(),
+      ...form,
+      sessionType: selectedType?.id,
+      sessionLabel: sess?.label||"",
+      date: selectedSlot.date,
+      time: selectedSlot.time,
+      price: sess?.price||"",
+      createdAt: now,
+    };
+    // Save registration
+    const newRegs = [...registrations, reg];
+    await updateRegistrations(newRegs);
+    // Update bookings count
     const newBookings = { ...bookings, [selectedSlot.id]: (bookings[selectedSlot.id]||0) + 1 };
-    updateBookings(newBookings);
+    await updateBookings(newBookings);
+    // Send email via EmailJS (if configured)
+    if(EMAILJS_SERVICE_ID !== "VOTRE_SERVICE_ID") {
+      try {
+        await fetch(`https://api.emailjs.com/api/v1.0/email/send`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            service_id: EMAILJS_SERVICE_ID,
+            template_id: EMAILJS_TEMPLATE_ID,
+            user_id: EMAILJS_PUBLIC_KEY,
+            template_params: {
+              to_email: "thedogexperience59@gmail.com",
+              client_prenom: form.prenom,
+              client_nom: form.nom,
+              client_email: form.email,
+              client_tel: form.tel,
+              chien_nom: form.chien,
+              chien_race: form.race||"Non précisé",
+              chien_age: form.age||"Non précisé",
+              session_type: sess?.label||"",
+              session_date: selectedSlot.date,
+              session_heure: selectedSlot.time,
+              session_prix: sess?.price||"",
+              notes: form.notes||"Aucune",
+              date_inscription: now,
+            }
+          })
+        });
+      } catch(e) { console.warn("Email non envoyé:", e); }
+    }
     setSubmitted(true);
   }
 
@@ -585,8 +717,8 @@ export default function App() {
   );
 
   if(adminMode && adminUnlocked) return (
-    <AdminPanel sessionTypes={sessionTypes} slots={slots} bookings={bookings}
-      onUpdateSessions={updateSessions} onUpdateSlots={updateSlots}
+    <AdminPanel sessionTypes={sessionTypes} slots={slots} bookings={bookings} registrations={registrations}
+      onUpdateSessions={updateSessions} onUpdateSlots={updateSlots} onDeleteRegistration={handleDeleteRegistration}
       onExit={()=>{ setAdminMode(false); setAdminUnlocked(false); setAdminPw(""); }} />
   );
 
