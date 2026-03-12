@@ -31,9 +31,9 @@ const DEFAULT_BOOKINGS = {};
 const DEFAULT_REGISTRATIONS = [];
 
 // EmailJS config — à remplir après création du compte EmailJS (voir guide)
-const EMAILJS_SERVICE_ID  = "VOTRE_SERVICE_ID";
-const EMAILJS_TEMPLATE_ID = "VOTRE_TEMPLATE_ID";
-const EMAILJS_PUBLIC_KEY  = "VOTRE_PUBLIC_KEY";
+const EMAILJS_SERVICE_ID  = "service_hmunyzw";
+const EMAILJS_TEMPLATE_ID = "template-xxckxqh";
+const EMAILJS_PUBLIC_KEY  = "0KzSyB2vEwZwiMvxP";
 
 const DEFAULT_SLOTS = {
   "2026-03": [
