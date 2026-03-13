@@ -1,4 +1,31 @@
 import { useState, useEffect } from "react";
+import { initializeApp } from "firebase/app";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBlYYWWtPyKwetms99bqaVeWbwXMxeLnBs",
+  authDomain: "the-dog-experience.firebaseapp.com",
+  projectId: "the-dog-experience",
+  storageBucket: "the-dog-experience.firebasestorage.app",
+  messagingSenderId: "192929565807",
+  appId: "1:192929565807:web:01af8e23d90496a697919a"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
+async function fbGet(key) {
+  try {
+    const snap = await getDoc(doc(db, "tde", key));
+    return snap.exists() ? snap.data().value : null;
+  } catch(e) { return null; }
+}
+
+async function fbSet(key, value) {
+  try {
+    await setDoc(doc(db, "tde", key), { value });
+  } catch(e) { console.warn("Firebase set error:", e); }
+}
 
 const YELLOW = "#F5B731";
 const TEAL   = "#2AADA0";
@@ -31,10 +58,10 @@ const DEFAULT_BOOKINGS = {};
 const DEFAULT_REGISTRATIONS = [];
 
 // EmailJS config — à remplir après création du compte EmailJS (voir guide)
-const EMAILJS_SERVICE_ID         = "service_hmunyzw";
-const EMAILJS_TEMPLATE_ID        = "template_xxckxqh";
-const EMAILJS_TEMPLATE_CLIENT_ID = "template_7tsf43p";
-const EMAILJS_PUBLIC_KEY         = "0KzSyB2vEwZwiMvxP";
+const EMAILJS_SERVICE_ID          = "service_hmunyzw";
+const EMAILJS_TEMPLATE_ID         = "template_xxckxqh";
+const EMAILJS_TEMPLATE_CLIENT_ID  = "template_7tsf43p";
+const EMAILJS_PUBLIC_KEY          = "0KzSyB2vEwZwiMvxP";
 
 const DEFAULT_SLOTS = {
   "2026-03": [
@@ -53,7 +80,7 @@ const DEFAULT_SLOTS = {
   ],
 };
 
-const ADMIN_PASSWORD = "qci35rd7";
+const ADMIN_PASSWORD = "chien123";
 const COLORS = [
   { value:TEAL,      label:"Turquoise" },
   { value:YELLOW,    label:"Jaune" },
@@ -625,10 +652,10 @@ function AdminPanel({ sessionTypes, slots, bookings, registrations, onUpdateSess
                           <button onClick={()=>{ setMsgModal(r); setMsgText(""); setMsgSent(false); }}
                             style={{ padding:"4px 10px", borderRadius:6, background:"#1a1a2a", border:"none", color:"#8888ff", cursor:"pointer", fontSize:12 }}>✉️ Message</button>
                           <button onClick={()=>{
-    const choice = window.confirm("Libérer aussi le créneau ?\n\nOK = Supprimer + libérer le créneau\nAnnuler = Supprimer uniquement l'inscription");
-    onDeleteRegistration(r.id, choice);
-  }}
-  style={{ padding:"4px 10px", borderRadius:6, background:"#3a1a1a", border:"none", color:"#e05050", cursor:"pointer", fontSize:12 }}>🗑 Annuler</button>
+                              const choice = window.confirm("Libérer aussi le créneau ?\n\nOK = Supprimer + libérer le créneau\nAnnuler = Supprimer uniquement l'inscription");
+                              onDeleteRegistration(r.id, choice);
+                            }}
+                            style={{ padding:"4px 10px", borderRadius:6, background:"#3a1a1a", border:"none", color:"#e05050", cursor:"pointer", fontSize:12 }}>🗑 Annuler</button>
                         </div>
                       </div>
                       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:8 }}>
@@ -708,14 +735,14 @@ export default function App() {
   useEffect(() => {
     async function load() {
       try {
-        const st = await window.storage.get("sessionTypes");
-        if(st) setSessionTypes(JSON.parse(st.value));
-        const sl = await window.storage.get("slots");
-        if(sl) setSlots(JSON.parse(sl.value));
-        const bk = await window.storage.get("bookings");
-        if(bk) setBookings(JSON.parse(bk.value));
-        const rg = await window.storage.get("registrations");
-        if(rg) setRegistrations(JSON.parse(rg.value));
+        const st = await fbGet("sessionTypes");
+        if(st) setSessionTypes(JSON.parse(st));
+        const sl = await fbGet("slots");
+        if(sl) setSlots(JSON.parse(sl));
+        const bk = await fbGet("bookings");
+        if(bk) setBookings(JSON.parse(bk));
+        const rg = await fbGet("registrations");
+        if(rg) setRegistrations(JSON.parse(rg));
       } catch(e) {}
       setLoaded(true);
     }
@@ -724,37 +751,41 @@ export default function App() {
 
   async function updateSessions(data) {
     setSessionTypes(data);
-    try { await window.storage.set("sessionTypes", JSON.stringify(data)); } catch(e){}
+    await fbSet("sessionTypes", JSON.stringify(data));
   }
   async function updateSlots(data) {
     setSlots(data);
-    try { await window.storage.set("slots", JSON.stringify(data)); } catch(e){}
+    await fbSet("slots", JSON.stringify(data));
   }
   async function updateRegistrations(data) {
     setRegistrations(data);
-    try { await window.storage.set("registrations", JSON.stringify(data)); } catch(e){}
+    await fbSet("registrations", JSON.stringify(data));
   }
 
   async function updateBookings(data) {
     setBookings(data);
-    try { await window.storage.set("bookings", JSON.stringify(data)); } catch(e){}
+    await fbSet("bookings", JSON.stringify(data));
   }
 
- function handleDeleteRegistration(id, freeSlot=false) {
-  const reg = registrations.find(r=>r.id===id);
-  const updated = registrations.filter(r=>r.id!==id);
-  updateRegistrations(updated);
-  if(freeSlot && reg) {
-    const slotId = Object.entries(slots).reduce((found, [month, slotList]) => {
-      const s = slotList.find(sl=>sl.date===reg.date && sl.time===reg.time && sl.type===reg.sessionType);
-      return s ? s.id : found;
-    }, null);
-    if(slotId) {
-      const newBookings = { ...bookings, [slotId]: Math.max(0, (bookings[slotId]||0) - 1) };
-      updateBookings(newBookings);
+  function handleDeleteRegistration(id, freeSlot=false) {
+    const reg = registrations.find(r=>r.id===id);
+    const updated = registrations.filter(r=>r.id!==id);
+    updateRegistrations(updated);
+    if(freeSlot && reg) {
+      // Find the slot matching this registration and decrement booking count
+      const matchingSlot = slots[reg.date] ? 
+        Object.values(slots).flat().find(s=>s.date===reg.date && s.time===reg.time) : null;
+      // Decrement bookings count for this slot
+      const slotId = Object.entries(slots).reduce((found, [month, slotList]) => {
+        const s = slotList.find(sl=>sl.date===reg.date && sl.time===reg.time && sl.type===reg.sessionType);
+        return s ? s.id : found;
+      }, null);
+      if(slotId) {
+        const newBookings = { ...bookings, [slotId]: Math.max(0, (bookings[slotId]||0) - 1) };
+        updateBookings(newBookings);
+      }
     }
   }
-}
 
   const [adminMode, setAdminMode]       = useState(false);
   const [adminPw, setAdminPw]           = useState("");
@@ -793,7 +824,6 @@ export default function App() {
       price: sess?.price||"",
       createdAt: now,
       confirmed: false, // confirmation manuelle depuis l'espace pro
-      objectif: form.objectif||"Non précisé",
     };
     // Save registration
     const newRegs = [...registrations, reg];
@@ -1020,19 +1050,6 @@ export default function App() {
                     <Field label="Race" value={form.race} onChange={v=>setForm({...form,race:v})} placeholder="Labrador…" />
                     <Field label="Âge" value={form.age} onChange={v=>setForm({...form,age:v})} placeholder="2 ans…" />
                   </div>
-                  {selectedType?.id === "bilan" && (
-  <div>
-    <label style={{ fontSize:11, fontWeight:700, color:"#888", letterSpacing:1.5, textTransform:"uppercase" }}>Objectif du bilan *</label>
-    <select value={form.objectif||""} onChange={e=>setForm({...form, objectif:e.target.value})}
-      style={{ width:"100%", padding:"12px 14px", borderRadius:10, border:"2px solid #e8e8e820", background:"#f9f9f9", fontSize:14, marginTop:6, outline:"none" }}>
-      <option value="">-- Choisissez --</option>
-      <option value="Bilan seul">🔍 Bilan seul</option>
-      <option value="Début forfait Réactif">🐾 Début de forfait Réactif</option>
-      <option value="Début forfait Sensible">🌿 Début de forfait Sensible</option>
-      <option value="Je ne sais pas encore">❓ Je ne sais pas encore</option>
-    </select>
-  </div>
-)}
                   <Field label="Notes ou demandes particulières" type="textarea" value={form.notes} onChange={v=>setForm({...form,notes:v})} placeholder="Décrivez vos attentes…" />
                 </div>
               </div>
@@ -1064,6 +1081,10 @@ export default function App() {
           </a>
         </div>
       </div>
+    </div>
+  );
+}
+
     </div>
   );
 }
