@@ -53,7 +53,7 @@ const DEFAULT_SLOTS = {
   ],
 };
 
-const ADMIN_PASSWORD = "chien123";
+const ADMIN_PASSWORD = "qci35rd7";
 const COLORS = [
   { value:TEAL,      label:"Turquoise" },
   { value:YELLOW,    label:"Jaune" },
