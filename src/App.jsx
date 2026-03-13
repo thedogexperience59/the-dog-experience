@@ -793,6 +793,7 @@ export default function App() {
       price: sess?.price||"",
       createdAt: now,
       confirmed: false, // confirmation manuelle depuis l'espace pro
+      objectif: form.objectif||"Non précisé",
     };
     // Save registration
     const newRegs = [...registrations, reg];
@@ -1019,6 +1020,19 @@ export default function App() {
                     <Field label="Race" value={form.race} onChange={v=>setForm({...form,race:v})} placeholder="Labrador…" />
                     <Field label="Âge" value={form.age} onChange={v=>setForm({...form,age:v})} placeholder="2 ans…" />
                   </div>
+                  {selectedType?.id === "bilan" && (
+  <div>
+    <label style={{ fontSize:11, fontWeight:700, color:"#888", letterSpacing:1.5, textTransform:"uppercase" }}>Objectif du bilan *</label>
+    <select value={form.objectif||""} onChange={e=>setForm({...form, objectif:e.target.value})}
+      style={{ width:"100%", padding:"12px 14px", borderRadius:10, border:"2px solid #e8e8e820", background:"#f9f9f9", fontSize:14, marginTop:6, outline:"none" }}>
+      <option value="">-- Choisissez --</option>
+      <option value="Bilan seul">🔍 Bilan seul</option>
+      <option value="Début forfait Réactif">🐾 Début de forfait Réactif</option>
+      <option value="Début forfait Sensible">🌿 Début de forfait Sensible</option>
+      <option value="Je ne sais pas encore">❓ Je ne sais pas encore</option>
+    </select>
+  </div>
+)}
                   <Field label="Notes ou demandes particulières" type="textarea" value={form.notes} onChange={v=>setForm({...form,notes:v})} placeholder="Décrivez vos attentes…" />
                 </div>
               </div>
