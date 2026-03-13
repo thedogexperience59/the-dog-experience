@@ -624,8 +624,11 @@ function AdminPanel({ sessionTypes, slots, bookings, registrations, onUpdateSess
                           )}
                           <button onClick={()=>{ setMsgModal(r); setMsgText(""); setMsgSent(false); }}
                             style={{ padding:"4px 10px", borderRadius:6, background:"#1a1a2a", border:"none", color:"#8888ff", cursor:"pointer", fontSize:12 }}>✉️ Message</button>
-                          <button onClick={()=>{ if(window.confirm("Supprimer cette inscription ?")) onDeleteRegistration(r.id); }}
-                            style={{ padding:"4px 10px", borderRadius:6, background:"#3a1a1a", border:"none", color:"#e05050", cursor:"pointer", fontSize:12 }}>🗑</button>
+                          <button onClick={()=>{
+    const choice = window.confirm("Libérer aussi le créneau ?\n\nOK = Supprimer + libérer le créneau\nAnnuler = Supprimer uniquement l'inscription");
+    onDeleteRegistration(r.id, choice);
+  }}
+  style={{ padding:"4px 10px", borderRadius:6, background:"#3a1a1a", border:"none", color:"#e05050", cursor:"pointer", fontSize:12 }}>🗑 Annuler</button>
                         </div>
                       </div>
                       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:8 }}>
@@ -737,10 +740,21 @@ export default function App() {
     try { await window.storage.set("bookings", JSON.stringify(data)); } catch(e){}
   }
 
-  function handleDeleteRegistration(id) {
-    const updated = registrations.filter(r=>r.id!==id);
-    updateRegistrations(updated);
+ function handleDeleteRegistration(id, freeSlot=false) {
+  const reg = registrations.find(r=>r.id===id);
+  const updated = registrations.filter(r=>r.id!==id);
+  updateRegistrations(updated);
+  if(freeSlot && reg) {
+    const slotId = Object.entries(slots).reduce((found, [month, slotList]) => {
+      const s = slotList.find(sl=>sl.date===reg.date && sl.time===reg.time && sl.type===reg.sessionType);
+      return s ? s.id : found;
+    }, null);
+    if(slotId) {
+      const newBookings = { ...bookings, [slotId]: Math.max(0, (bookings[slotId]||0) - 1) };
+      updateBookings(newBookings);
+    }
   }
+}
 
   const [adminMode, setAdminMode]       = useState(false);
   const [adminPw, setAdminPw]           = useState("");
