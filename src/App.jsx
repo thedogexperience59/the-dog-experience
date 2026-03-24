@@ -80,7 +80,7 @@ const DEFAULT_SLOTS = {
   ],
 };
 
-const ADMIN_PASSWORD = "chien123";
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
 const COLORS = [
   { value:TEAL,      label:"Turquoise" },
   { value:YELLOW,    label:"Jaune" },
