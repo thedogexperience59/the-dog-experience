@@ -60,7 +60,7 @@ const DEFAULT_REGISTRATIONS = [];
 // EmailJS config — à remplir après création du compte EmailJS (voir guide)
 const EMAILJS_SERVICE_ID          = import.meta.env.VITE_EMAILJS_SERVICE_ID;
 const EMAILJS_TEMPLATE_ID         = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
-const EMAILJS_TEMPLATE_CLIENT_ID  = import.meta.env.VITE_EMAILJS_TEMPLATE_CLIENT_ID;
+const EMAILJS_TEMPLATE_CLIENT_ID = "template_7tsf43p";
 const EMAILJS_PUBLIC_KEY          = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
 const DEFAULT_SLOTS = {
