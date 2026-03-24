@@ -280,6 +280,7 @@ function AdminPanel({ sessionTypes, slots, bookings, registrations, onUpdateSess
       }
       window.emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
       const sess = sessionTypes.find(s=>s.id===reg.sessionType);
+      alert("Envoi à : " + reg.email);
       await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_CLIENT_ID, {
         to_email: reg.email,
         client_prenom: reg.prenom,
