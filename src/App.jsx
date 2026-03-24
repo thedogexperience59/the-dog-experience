@@ -3,12 +3,12 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBlYYWWtPyKwetms99bqaVeWbwXMxeLnBs",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "the-dog-experience.firebaseapp.com",
   projectId: "the-dog-experience",
   storageBucket: "the-dog-experience.firebasestorage.app",
   messagingSenderId: "192929565807",
-  appId: "1:192929565807:web:01af8e23d90496a697919a"
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 const firebaseApp = initializeApp(firebaseConfig);
@@ -58,10 +58,10 @@ const DEFAULT_BOOKINGS = {};
 const DEFAULT_REGISTRATIONS = [];
 
 // EmailJS config — à remplir après création du compte EmailJS (voir guide)
-const EMAILJS_SERVICE_ID          = "service_hmunyzw";
-const EMAILJS_TEMPLATE_ID         = "template_xxckxqh";
-const EMAILJS_TEMPLATE_CLIENT_ID  = "template_7tsf43p";
-const EMAILJS_PUBLIC_KEY          = "0KzSyB2vEwZwiMvxP";
+const EMAILJS_SERVICE_ID          = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+const EMAILJS_TEMPLATE_ID         = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+const EMAILJS_TEMPLATE_CLIENT_ID  = import.meta.env.VITE_EMAILJS_TEMPLATE_CLIENT_ID;
+const EMAILJS_PUBLIC_KEY          = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
 const DEFAULT_SLOTS = {
   "2026-03": [
