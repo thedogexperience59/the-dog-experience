@@ -379,9 +379,10 @@ function AdminPanel({ sessionTypes, slots, bookings, registrations, onUpdateSess
 
   function addMonth() {
     const m = newMonthVal.trim();
-    if(!m||slots[m]) return;
-    onUpdateSlots({ ...slots, [m]:[] });
-    setSlotMonth(m); setShowNewMonth(false); setNewMonthVal("");
+ if(!m) return;
+if(slots[m] !== undefined) { setSlotMonth(m); setShowNewMonth(false); setNewMonthVal(""); return; }
+onUpdateSlots({ ...slots, [m]:[] });
+setSlotMonth(m); setShowNewMonth(false); setNewMonthVal("");
   }
 
   function deleteMonth(m) {
