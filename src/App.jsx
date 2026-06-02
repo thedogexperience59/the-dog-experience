@@ -361,7 +361,8 @@ function AdminPanel({ sessionTypes, slots, bookings, registrations, onUpdateSess
   }
 
   function addSlot() {
-    if(!newSlot.date||!newSlot.time||!newSlot.type||!slotMonth) return;
+    if(!newSlot.date||!newSlot.time||!newSlot.type) return;
+const slotMonth = newSlot.date.substring(0,7);
     const updated = { ...slots };
     if(!updated[slotMonth]) updated[slotMonth]=[];
     updated[slotMonth] = [...updated[slotMonth], { id:uid(), ...newSlot, available:true }];
@@ -539,7 +540,7 @@ setSlotMonth(m); setShowNewMonth(false); setNewMonthVal("");
                 </div>
               );})}
             </div>
-            {slotMonth && (
+            {true && (
               <>
                 {/* Add slot */}
                 <div style={{ background:"#1a1a1a", borderRadius:14, padding:18, marginBottom:20, border:"2px solid #2a2a2a" }}>
@@ -555,11 +556,11 @@ setSlotMonth(m); setShowNewMonth(false); setNewMonthVal("");
                   </div>
                 </div>
                 {/* Slot list */}
-                {(!slots[slotMonth]||slots[slotMonth].length===0) ? (
+               {Object.values(slots).flat().length===0 ? (
                   <div style={{ textAlign:"center", padding:"40px 20px", color:"#555" }}>Aucun créneau ce mois-ci.</div>
                 ) : (
                   <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                    {slots[slotMonth].map(slot=>{
+                   {Object.values(slots).flat().sort((a,b)=>a.date+a.time<b.date+b.time?-1:1).map(slot=>{
                       const sess = sessionTypes.find(s=>s.id===slot.type);
                       const max = sess?.maxPeople ?? 1;
                       const booked = bookings[slot.id] || 0;
@@ -586,11 +587,11 @@ setSlotMonth(m); setShowNewMonth(false); setNewMonthVal("");
                             <span style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20, background:slot.available?"#0d2a20":"#2a1010", color:slot.available?"#5ada9a":"#e05050" }}>
                               {slot.available?"Dispo":"Bloqué"}
                             </span>
-                            <button onClick={()=>toggleSlot(slotMonth,slot.id)}
+                           <button onClick={()=>{ const m=Object.entries(slots).find(([,v])=>v.find(s=>s.id===slot.id))?.[0]; if(m) toggleSlot(m,slot.id); }}
                               style={{ padding:"5px 12px", borderRadius:8, background:"#2a2a2a", border:"none", color:"#aaa", cursor:"pointer", fontSize:12, fontFamily:"inherit" }}>
                               {slot.available?"🔒 Bloquer":"🔓 Libérer"}
                             </button>
-                            <button onClick={()=>deleteSlot(slotMonth,slot.id)}
+                           <button onClick={()=>{ const m=Object.entries(slots).find(([,v])=>v.find(s=>s.id===slot.id))?.[0]; if(m) deleteSlot(m,slot.id); }}
                               style={{ padding:"5px 10px", borderRadius:8, background:"#3a1a1a", border:"none", color:"#e05050", cursor:"pointer", fontSize:13 }}>🗑</button>
                           </div>
                         </div>
@@ -819,7 +820,7 @@ export default function App() {
     return slot.available && booked < max;
   }
 
-  const availableSlots = (slots[selectedMonth]||[]).filter(s=>s.type===selectedType?.id);
+ const availableSlots = Object.values(slots).flat().filter(s=>s.type===selectedType?.id).sort((a,b)=>a.date+a.time<b.date+b.time?-1:1);
   const allFilled = form.nom&&form.prenom&&form.email&&form.tel&&form.chien;
 
   async function handleConfirm() {
@@ -1006,17 +1007,10 @@ export default function App() {
                 <span style={{ fontSize:13, color:"#1a7a72" }}>Séance collective · jusqu'à <strong>{selectedType.maxPeople} personnes</strong> par créneau</span>
               </div>
             )}
-            <div style={{ display:"flex", gap:8, marginBottom:24, flexWrap:"wrap" }}>
-              {months.map(m=>{ const [y,mo]=m.split("-"); const sel=selectedMonth===m; return (
-                <button key={m} onClick={()=>{ setSelectedMonth(m); setSelectedSlot(null); }}
-                  style={{ padding:"8px 20px", borderRadius:20, border:`2px solid ${sel?BLACK:BORDER}`, background:sel?BLACK:WHITE, color:sel?WHITE:"#888", fontWeight:700, fontSize:13, cursor:"pointer", fontFamily:"'Bebas Neue',sans-serif", letterSpacing:1 }}>
-                  {FR_MONTHS[parseInt(mo)-1]?.toUpperCase()} {y}
-                </button>
-              );})}
-            </div>
+         
             {availableSlots.length===0 ? (
               <div style={{ textAlign:"center", padding:"40px 20px", color:"#ccc" }}>
-                <div style={{ fontSize:40, marginBottom:10 }}>📅</div>Aucun créneau ce mois-ci.
+                <div style={{ fontSize:40, marginBottom:10 }}>📅</div>Aucun créneau disponible pour cette séance.
               </div>
             ) : (
               <SlotPicker slots={availableSlots} selectedSlot={selectedSlot} onSelect={setSelectedSlot} sessionTypes={sessionTypes} bookings={bookings} />
