@@ -810,6 +810,7 @@ export default function App() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [form, setForm] = useState({ nom:"", prenom:"", email:"", tel:"", chien:"", race:"", age:"", notes:"" });
   const [submitted, setSubmitted]     = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const months = Object.keys(slots).sort();
 
@@ -825,6 +826,8 @@ export default function App() {
 
   async function handleConfirm() {
     if(!selectedSlot) return;
+    if(submitting) return;
+setSubmitting(true);
     const sess = sessionTypes.find(s=>s.id===selectedType?.id);
     const now = new Date().toLocaleDateString("fr-FR", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
     const reg = {
@@ -879,6 +882,7 @@ export default function App() {
       } catch(e) { console.warn("Email non envoyé:", e); }
     }
     setSubmitted(true);
+    setSubmitting(false);
   }
 
   if(!loaded) return <div style={{ minHeight:"100vh", background:WHITE, display:"flex", alignItems:"center", justifyContent:"center", color:"#aaa" }}>Chargement…</div>;
@@ -1060,7 +1064,7 @@ export default function App() {
                 </div>
               </div>
             </div>
-            <div style={{ marginTop:24 }}><Btn disabled={!allFilled} onClick={handleConfirm} accent={TEAL}>✓ CONFIRMER MA DEMANDE DE RDV</Btn></div>
+            <div style={{ marginTop:24 }}><Btn disabled={!allFilled||submitting} onClick={handleConfirm} accent={TEAL}>{submitting ? "⏳ ENVOI EN COURS..." : "✓ CONFIRMER MA DEMANDE DE RDV"}</Btn></div>
             <div style={{ fontSize:12, color:"#ccc", textAlign:"center", marginTop:10 }}>Confirmation par email dans les 24h.</div>
           </div>
         )}
