@@ -266,6 +266,7 @@ function AdminPanel({ sessionTypes, slots, bookings, registrations, onUpdateSess
   const [msgText, setMsgText] = useState("");
   const [msgSending, setMsgSending] = useState(false);
   const [msgSent, setMsgSent] = useState(false);
+  const [filterSession, setFilterSession] = useState("");
 
   async function confirmRegistration(reg) {
     // Send confirmation email to client
@@ -622,14 +623,23 @@ setSlotMonth(m); setShowNewMonth(false); setNewMonthVal("");
                 </button>
               )}
             </div>
-            {registrations.length===0 ? (
+            <div style={{ marginBottom:16 }}>
+  <select value={filterSession||""} onChange={e=>setFilterSession(e.target.value)}
+    style={{ padding:"8px 14px", borderRadius:8, border:"1px solid #333", background:"#1a1a1a", color:"#e8e8e8", fontSize:13, width:"100%" }}>
+    <option value="">— Toutes les séances —</option>
+    {sessionTypes.map(s=>(
+      <option key={s.id} value={s.id}>{s.icon} {s.label}</option>
+    ))}
+  </select>
+</div>
+           {[...registrations].filter(r=>!filterSession||r.sessionType===filterSession).length===0 ? (
               <div style={{ textAlign:"center", padding:"60px 20px", color:"#555" }}>
                 <div style={{ fontSize:40, marginBottom:10 }}>📭</div>
                 Aucune inscription pour l'instant.
               </div>
             ) : (
               <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-                {[...registrations].reverse().map((r,i)=>{
+                {[...registrations].reverse().filter(r=>!filterSession||r.sessionType===filterSession).map((r,i)=>{
                   const sess = sessionTypes.find(s=>s.id===r.sessionType);
                   return (
                     <div key={r.id||i} style={{ background:"#1a1a1a", borderRadius:12, padding:"16px 18px", border:"1px solid #2a2a2a" }}>
