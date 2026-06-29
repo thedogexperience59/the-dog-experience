@@ -640,7 +640,7 @@ setSlotMonth(m); setShowNewMonth(false); setNewMonthVal("");
       <option key={s.id} value={s.id}>{s.icon} {s.label}</option>
     ))}
    </select>
-  </div>
+
     <div style={{ marginBottom:16, display:"flex", gap:10 }}>
       <button onClick={copyEmails}
         style={{ padding:"8px 16px", borderRadius:8, background:emailsCopied?"#0d2a20":"#1a1a2a", border:"none", color:emailsCopied?"#5ada9a":"#8888ff", cursor:"pointer", fontSize:13, fontWeight:700 }}>
@@ -649,7 +649,7 @@ setSlotMonth(m); setShowNewMonth(false); setNewMonthVal("");
       <span style={{ fontSize:11, color:"#555", alignSelf:"center" }}>
         {filterSession ? "emails de cette séance" : "tous les emails"}
       </span>
-    </div>
+   
            {[...registrations].filter(r=>!filterSession||r.sessionType===filterSession).length===0 ? (
               <div style={{ textAlign:"center", padding:"60px 20px", color:"#555" }}>
                 <div style={{ fontSize:40, marginBottom:10 }}>📭</div>
