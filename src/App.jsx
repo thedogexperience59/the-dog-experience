@@ -58,9 +58,9 @@ const DEFAULT_BOOKINGS = {};
 const DEFAULT_REGISTRATIONS = [];
 
 // EmailJS config — à remplir après création du compte EmailJS (voir guide)
-const EMAILJS_SERVICE_ID          = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-const EMAILJS_TEMPLATE_ID = "template_xxckxqh";
-const EMAILJS_TEMPLATE_CLIENT_ID = "template_7tsf43p";
+const EMAILJS_SERVICE_ID          = "service_hmunyzw";
+const EMAILJS_TEMPLATE_ID         = "template_xxckxqh";
+const EMAILJS_TEMPLATE_CLIENT_ID  = "template_7tsf43p";
 const EMAILJS_PUBLIC_KEY          = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
 const DEFAULT_SLOTS = {
@@ -269,13 +269,14 @@ function AdminPanel({ sessionTypes, slots, bookings, registrations, onUpdateSess
   const [filterSession, setFilterSession] = useState("");
   const [emailsCopied, setEmailsCopied] = useState(false);
 
-function copyEmails() {
-  const filtered = registrations.filter(r=>filterSession?r.sessionType===filterSession:true);
-  const emails = [...new Set(filtered.map(r=>r.email))].join(", ");
-  navigator.clipboard.writeText(emails);
-  setEmailsCopied(true);
-  setTimeout(()=>setEmailsCopied(false), 2000);
-}
+  function copyEmails() {
+    const filtered = registrations.filter(r=>filterSession?r.sessionType===filterSession:true);
+    const emails = [...new Set(filtered.map(r=>r.email))].join(", ");
+    navigator.clipboard.writeText(emails);
+    setEmailsCopied(true);
+    setTimeout(()=>setEmailsCopied(false), 2000);
+  }
+
   async function confirmRegistration(reg) {
     // Send confirmation email to client
     try {
@@ -289,7 +290,6 @@ function copyEmails() {
       }
       window.emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
       const sess = sessionTypes.find(s=>s.id===reg.sessionType);
-      alert("Envoi à : " + reg.email);
       await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_CLIENT_ID, {
         to_email: reg.email,
         client_prenom: reg.prenom,
@@ -369,8 +369,7 @@ function copyEmails() {
   }
 
   function addSlot() {
-    if(!newSlot.date||!newSlot.time||!newSlot.type) return;
-const slotMonth = newSlot.date.substring(0,7);
+    if(!newSlot.date||!newSlot.time||!newSlot.type||!slotMonth) return;
     const updated = { ...slots };
     if(!updated[slotMonth]) updated[slotMonth]=[];
     updated[slotMonth] = [...updated[slotMonth], { id:uid(), ...newSlot, available:true }];
@@ -389,10 +388,10 @@ const slotMonth = newSlot.date.substring(0,7);
 
   function addMonth() {
     const m = newMonthVal.trim();
- if(!m) return;
-if(slots[m] !== undefined) { setSlotMonth(m); setShowNewMonth(false); setNewMonthVal(""); return; }
-onUpdateSlots({ ...slots, [m]:[] });
-setSlotMonth(m); setShowNewMonth(false); setNewMonthVal("");
+    if(!m) return;
+    if(slots[m] !== undefined) { setSlotMonth(m); setShowNewMonth(false); setNewMonthVal(""); return; }
+    onUpdateSlots({ ...slots, [m]:[] });
+    setSlotMonth(m); setShowNewMonth(false); setNewMonthVal("");
   }
 
   function deleteMonth(m) {
@@ -548,7 +547,7 @@ setSlotMonth(m); setShowNewMonth(false); setNewMonthVal("");
                 </div>
               );})}
             </div>
-            {true && (
+            {slotMonth && (
               <>
                 {/* Add slot */}
                 <div style={{ background:"#1a1a1a", borderRadius:14, padding:18, marginBottom:20, border:"2px solid #2a2a2a" }}>
@@ -564,11 +563,11 @@ setSlotMonth(m); setShowNewMonth(false); setNewMonthVal("");
                   </div>
                 </div>
                 {/* Slot list */}
-               {Object.values(slots).flat().length===0 ? (
+                {(!slots[slotMonth]||slots[slotMonth].length===0) ? (
                   <div style={{ textAlign:"center", padding:"40px 20px", color:"#555" }}>Aucun créneau ce mois-ci.</div>
                 ) : (
                   <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                   {Object.values(slots).flat().sort((a,b)=>a.date+a.time<b.date+b.time?-1:1).map(slot=>{
+                    {slots[slotMonth].map(slot=>{
                       const sess = sessionTypes.find(s=>s.id===slot.type);
                       const max = sess?.maxPeople ?? 1;
                       const booked = bookings[slot.id] || 0;
@@ -595,11 +594,11 @@ setSlotMonth(m); setShowNewMonth(false); setNewMonthVal("");
                             <span style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20, background:slot.available?"#0d2a20":"#2a1010", color:slot.available?"#5ada9a":"#e05050" }}>
                               {slot.available?"Dispo":"Bloqué"}
                             </span>
-                           <button onClick={()=>{ const m=Object.entries(slots).find(([,v])=>v.find(s=>s.id===slot.id))?.[0]; if(m) toggleSlot(m,slot.id); }}
+                            <button onClick={()=>toggleSlot(slotMonth,slot.id)}
                               style={{ padding:"5px 12px", borderRadius:8, background:"#2a2a2a", border:"none", color:"#aaa", cursor:"pointer", fontSize:12, fontFamily:"inherit" }}>
                               {slot.available?"🔒 Bloquer":"🔓 Libérer"}
                             </button>
-                           <button onClick={()=>{ const m=Object.entries(slots).find(([,v])=>v.find(s=>s.id===slot.id))?.[0]; if(m) deleteSlot(m,slot.id); }}
+                            <button onClick={()=>deleteSlot(slotMonth,slot.id)}
                               style={{ padding:"5px 10px", borderRadius:8, background:"#3a1a1a", border:"none", color:"#e05050", cursor:"pointer", fontSize:13 }}>🗑</button>
                           </div>
                         </div>
@@ -632,25 +631,21 @@ setSlotMonth(m); setShowNewMonth(false); setNewMonthVal("");
                 </button>
               )}
             </div>
-<div style={{ marginBottom:16 }}>
-  <select value={filterSession||""} onChange={e=>setFilterSession(e.target.value)}
-    style={{ padding:"8px 14px", borderRadius:8, border:"1px solid #333", background:"#1a1a1a", color:"#e8e8e8", fontSize:13, width:"100%" }}>
-    <option value="">— Toutes les séances —</option>
-    {sessionTypes.map(s=>(
-      <option key={s.id} value={s.id}>{s.icon} {s.label}</option>
-    ))}
-   </select>
-
-    <div style={{ marginBottom:16, display:"flex", gap:10 }}>
-      <button onClick={copyEmails}
-        style={{ padding:"8px 16px", borderRadius:8, background:emailsCopied?"#0d2a20":"#1a1a2a", border:"none", color:emailsCopied?"#5ada9a":"#8888ff", cursor:"pointer", fontSize:13, fontWeight:700 }}>
-        {emailsCopied ? "✅ Emails copiés !" : "📋 Copier les emails"}
-      </button>
-      <span style={{ fontSize:11, color:"#555", alignSelf:"center" }}>
-        {filterSession ? "emails de cette séance" : "tous les emails"}
-      </span>
-   
-           {[...registrations].filter(r=>!filterSession||r.sessionType===filterSession).length===0 ? (
+            {/* Filtre + copie emails */}
+            <div style={{ marginBottom:12, display:"flex", gap:10, flexWrap:"wrap", alignItems:"center" }}>
+              <select value={filterSession} onChange={e=>setFilterSession(e.target.value)}
+                style={{ flex:1, minWidth:200, padding:"8px 14px", borderRadius:8, border:"1px solid #333", background:"#1a1a1a", color:"#e8e8e8", fontSize:13 }}>
+                <option value="">— Toutes les séances —</option>
+                {sessionTypes.map(s=>(
+                  <option key={s.id} value={s.id}>{s.icon} {s.label}</option>
+                ))}
+              </select>
+              <button onClick={copyEmails}
+                style={{ padding:"8px 16px", borderRadius:8, background:emailsCopied?"#0d2a20":"#1a1a2a", border:"none", color:emailsCopied?"#5ada9a":"#8888ff", cursor:"pointer", fontSize:13, fontWeight:700, whiteSpace:"nowrap" }}>
+                {emailsCopied ? "✅ Emails copiés !" : "📋 Copier les emails"}
+              </button>
+            </div>
+            {[...registrations].filter(r=>!filterSession||r.sessionType===filterSession).length===0 ? (
               <div style={{ textAlign:"center", padding:"60px 20px", color:"#555" }}>
                 <div style={{ fontSize:40, marginBottom:10 }}>📭</div>
                 Aucune inscription pour l'instant.
@@ -827,7 +822,6 @@ export default function App() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [form, setForm] = useState({ nom:"", prenom:"", email:"", tel:"", chien:"", race:"", age:"", notes:"" });
   const [submitted, setSubmitted]     = useState(false);
-  const [submitting, setSubmitting] = useState(false);
 
   const months = Object.keys(slots).sort();
 
@@ -838,15 +832,11 @@ export default function App() {
     return slot.available && booked < max;
   }
 
- const availableSlots = Object.values(slots).flat().filter(s=>s.type===selectedType?.id).sort((a,b)=>a.date+a.time<b.date+b.time?-1:1);
+  const availableSlots = (slots[selectedMonth]||[]).filter(s=>s.type===selectedType?.id);
   const allFilled = form.nom&&form.prenom&&form.email&&form.tel&&form.chien;
 
   async function handleConfirm() {
     if(!selectedSlot) return;
-    if(submitting) return;
-    const alreadyBooked = registrations.find(r=>r.email===form.email && r.sessionType===selectedType?.id && r.date===selectedSlot.date && r.time===selectedSlot.time);
-if(alreadyBooked) { alert("⚠️ Cette adresse email est déjà inscrite sur ce créneau !"); setSubmitting(false); return; }
-setSubmitting(true);
     const sess = sessionTypes.find(s=>s.id===selectedType?.id);
     const now = new Date().toLocaleDateString("fr-FR", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
     const reg = {
@@ -901,7 +891,6 @@ setSubmitting(true);
       } catch(e) { console.warn("Email non envoyé:", e); }
     }
     setSubmitted(true);
-    setSubmitting(false);
   }
 
   if(!loaded) return <div style={{ minHeight:"100vh", background:WHITE, display:"flex", alignItems:"center", justifyContent:"center", color:"#aaa" }}>Chargement…</div>;
@@ -1030,10 +1019,17 @@ setSubmitting(true);
                 <span style={{ fontSize:13, color:"#1a7a72" }}>Séance collective · jusqu'à <strong>{selectedType.maxPeople} personnes</strong> par créneau</span>
               </div>
             )}
-         
+            <div style={{ display:"flex", gap:8, marginBottom:24, flexWrap:"wrap" }}>
+              {months.map(m=>{ const [y,mo]=m.split("-"); const sel=selectedMonth===m; return (
+                <button key={m} onClick={()=>{ setSelectedMonth(m); setSelectedSlot(null); }}
+                  style={{ padding:"8px 20px", borderRadius:20, border:`2px solid ${sel?BLACK:BORDER}`, background:sel?BLACK:WHITE, color:sel?WHITE:"#888", fontWeight:700, fontSize:13, cursor:"pointer", fontFamily:"'Bebas Neue',sans-serif", letterSpacing:1 }}>
+                  {FR_MONTHS[parseInt(mo)-1]?.toUpperCase()} {y}
+                </button>
+              );})}
+            </div>
             {availableSlots.length===0 ? (
               <div style={{ textAlign:"center", padding:"40px 20px", color:"#ccc" }}>
-                <div style={{ fontSize:40, marginBottom:10 }}>📅</div>Aucun créneau disponible pour cette séance.
+                <div style={{ fontSize:40, marginBottom:10 }}>📅</div>Aucun créneau ce mois-ci.
               </div>
             ) : (
               <SlotPicker slots={availableSlots} selectedSlot={selectedSlot} onSelect={setSelectedSlot} sessionTypes={sessionTypes} bookings={bookings} />
@@ -1083,7 +1079,7 @@ setSubmitting(true);
                 </div>
               </div>
             </div>
-            <div style={{ marginTop:24 }}><Btn disabled={!allFilled||submitting} onClick={handleConfirm} accent={TEAL}>{submitting ? "⏳ ENVOI EN COURS..." : "✓ CONFIRMER MA DEMANDE DE RDV"}</Btn></div>
+            <div style={{ marginTop:24 }}><Btn disabled={!allFilled} onClick={handleConfirm} accent={TEAL}>✓ CONFIRMER MA DEMANDE DE RDV</Btn></div>
             <div style={{ fontSize:12, color:"#ccc", textAlign:"center", marginTop:10 }}>Confirmation par email dans les 24h.</div>
           </div>
         )}
