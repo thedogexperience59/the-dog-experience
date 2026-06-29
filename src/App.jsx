@@ -267,7 +267,7 @@ function AdminPanel({ sessionTypes, slots, bookings, registrations, onUpdateSess
   const [msgSending, setMsgSending] = useState(false);
   const [msgSent, setMsgSent] = useState(false);
   const [filterSession, setFilterSession] = useState("");
-const [emailsCopied, setEmailsCopied] = useState(false);
+  const [emailsCopied, setEmailsCopied] = useState(false);
 
 function copyEmails() {
   const filtered = registrations.filter(r=>filterSession?r.sessionType===filterSession:true);
