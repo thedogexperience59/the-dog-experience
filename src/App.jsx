@@ -632,15 +632,15 @@ setSlotMonth(m); setShowNewMonth(false); setNewMonthVal("");
                 </button>
               )}
             </div>
-            <div style={{ marginBottom:16 }}>
+<div style={{ marginBottom:16 }}>
   <select value={filterSession||""} onChange={e=>setFilterSession(e.target.value)}
     style={{ padding:"8px 14px", borderRadius:8, border:"1px solid #333", background:"#1a1a1a", color:"#e8e8e8", fontSize:13, width:"100%" }}>
     <option value="">— Toutes les séances —</option>
     {sessionTypes.map(s=>(
       <option key={s.id} value={s.id}>{s.icon} {s.label}</option>
     ))}
-</select>
-    </div>
+   </select>
+  </div>
             </div>
   <div style={{ marginBottom:16, display:"flex", gap:10 }}>
     <button onClick={copyEmails}
