@@ -641,8 +641,7 @@ setSlotMonth(m); setShowNewMonth(false); setNewMonthVal("");
     ))}
    </select>
   </div>
-            </div>
-  <div style={{ marginBottom:16, display:"flex", gap:10 }}>
+       
     <button onClick={copyEmails}
       style={{ padding:"8px 16px", borderRadius:8, background:emailsCopied?"#0d2a20":"#1a1a2a", border:"none", color:emailsCopied?"#5ada9a":"#8888ff", cursor:"pointer", fontSize:13, fontWeight:700 }}>
       {emailsCopied ? "✅ Emails copiés !" : "📋 Copier les emails"}
