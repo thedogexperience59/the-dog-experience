@@ -833,7 +833,8 @@ export default function App() {
   }
 
   const availableSlots = (slots[selectedMonth]||[]).filter(s=>s.type===selectedType?.id);
-  const allFilled = form.nom&&form.prenom&&form.email&&form.tel&&form.chien;
+ const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
+const allFilled = form.nom&&form.prenom&&form.email&&emailValid&&form.tel&&form.chien;
 
   async function handleConfirm() {
     if(!selectedSlot) return;
@@ -1063,7 +1064,7 @@ export default function App() {
                 <Field label="Nom" value={form.nom} onChange={v=>setForm({...form,nom:v})} placeholder="Votre nom" required />
               </div>
               <Field label="Email" type="email" value={form.email} onChange={v=>setForm({...form,email:v})} placeholder="vous@email.fr" required />
-              <Field label="Téléphone" type="tel" value={form.tel} onChange={v=>setForm({...form,tel:v})} placeholder="06 12 34 56 78" required />
+              <Field {form.email && !emailValid && <div style={{ color:"#e05050", fontSize:11, marginTop:4 }}>⚠️ Adresse email invalide</div>} label="Téléphone" type="tel" value={form.tel} onChange={v=>setForm({...form,tel:v})} placeholder="06 12 34 56 78" required />
               <div style={{ borderTop:`2px solid ${BORDER}`, paddingTop:18, marginTop:4 }}>
                 <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
                   <div style={{ width:4, height:20, background:YELLOW, borderRadius:2 }} />
