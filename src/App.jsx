@@ -844,7 +844,7 @@ export default function App() {
   async function handleConfirm() {
     if(!selectedSlot) return;
     if(submitting) return;
-    javascriptconst alreadyBooked = registrations.find(r=>r.email===form.email && r.sessionType===selectedType?.id && r.date===selectedSlot.date && r.time===selectedSlot.time);
+    const alreadyBooked = registrations.find(r=>r.email===form.email && r.sessionType===selectedType?.id && r.date===selectedSlot.date && r.time===selectedSlot.time);
 if(alreadyBooked) { alert("⚠️ Cette adresse email est déjà inscrite sur ce créneau !"); setSubmitting(false); return; }
 setSubmitting(true);
     const sess = sessionTypes.find(s=>s.id===selectedType?.id);
