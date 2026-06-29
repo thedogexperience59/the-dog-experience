@@ -267,7 +267,15 @@ function AdminPanel({ sessionTypes, slots, bookings, registrations, onUpdateSess
   const [msgSending, setMsgSending] = useState(false);
   const [msgSent, setMsgSent] = useState(false);
   const [filterSession, setFilterSession] = useState("");
+const [emailsCopied, setEmailsCopied] = useState(false);
 
+function copyEmails() {
+  const filtered = registrations.filter(r=>filterSession?r.sessionType===filterSession:true);
+  const emails = [...new Set(filtered.map(r=>r.email))].join(", ");
+  navigator.clipboard.writeText(emails);
+  setEmailsCopied(true);
+  setTimeout(()=>setEmailsCopied(false), 2000);
+}
   async function confirmRegistration(reg) {
     // Send confirmation email to client
     try {
@@ -631,8 +639,17 @@ setSlotMonth(m); setShowNewMonth(false); setNewMonthVal("");
     {sessionTypes.map(s=>(
       <option key={s.id} value={s.id}>{s.icon} {s.label}</option>
     ))}
-  </select>
-</div>
+</select>
+  </div>
+  <div style={{ marginBottom:16, display:"flex", gap:10 }}>
+    <button onClick={copyEmails}
+      style={{ padding:"8px 16px", borderRadius:8, background:emailsCopied?"#0d2a20":"#1a1a2a", border:"none", color:emailsCopied?"#5ada9a":"#8888ff", cursor:"pointer", fontSize:13, fontWeight:700 }}>
+      {emailsCopied ? "✅ Emails copiés !" : "📋 Copier les emails"}
+    </button>
+    <span style={{ fontSize:11, color:"#555", alignSelf:"center" }}>
+      {filterSession ? "emails de cette séance" : "tous les emails"}
+    </span>
+  </div>
            {[...registrations].filter(r=>!filterSession||r.sessionType===filterSession).length===0 ? (
               <div style={{ textAlign:"center", padding:"60px 20px", color:"#555" }}>
                 <div style={{ fontSize:40, marginBottom:10 }}>📭</div>
@@ -827,6 +844,8 @@ export default function App() {
   async function handleConfirm() {
     if(!selectedSlot) return;
     if(submitting) return;
+    javascriptconst alreadyBooked = registrations.find(r=>r.email===form.email && r.sessionType===selectedType?.id && r.date===selectedSlot.date && r.time===selectedSlot.time);
+if(alreadyBooked) { alert("⚠️ Cette adresse email est déjà inscrite sur ce créneau !"); setSubmitting(false); return; }
 setSubmitting(true);
     const sess = sessionTypes.find(s=>s.id===selectedType?.id);
     const now = new Date().toLocaleDateString("fr-FR", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
