@@ -1064,7 +1064,7 @@ const allFilled = form.nom&&form.prenom&&form.email&&emailValid&&form.tel&&form.
                 <Field label="Nom" value={form.nom} onChange={v=>setForm({...form,nom:v})} placeholder="Votre nom" required />
               </div>
               <Field label="Email" type="email" value={form.email} onChange={v=>setForm({...form,email:v})} placeholder="vous@email.fr" required />
-              <Field {form.email &&{form.email && !emailValid && <div style={{ color:"#e05050", fontSize:11, marginTop:4 }}>⚠️ Adresse email invalide</div>}
+              {form.email && !emailValid && <div style={{ color:"#e05050", fontSize:11, marginTop:4 }}>⚠️ Adresse email invalide</div>}
 <Field label="Téléphone" type="tel" value={form.tel} onChange={v=>setForm({...form,tel:v})} placeholder="06 12 34 56 78" required />
               <div style={{ borderTop:`2px solid ${BORDER}`, paddingTop:18, marginTop:4 }}>
                 <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
