@@ -271,7 +271,7 @@ function AdminPanel({ sessionTypes, slots, bookings, registrations, onUpdateSess
 
   function copyEmails() {
     const filtered = registrations.filter(r=>filterSession?r.sessionType===filterSession:true);
-    const emails = [...new Set(filtered.map(r=>r.email))].join(", ");
+    const emails = [...new Set(filtered.map(r=>r.email))].join("; ");
     navigator.clipboard.writeText(emails);
     setEmailsCopied(true);
     setTimeout(()=>setEmailsCopied(false), 2000);
